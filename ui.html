@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Inter, sans-serif; font-size: 13px; color: #1a1a1a; background: #fff; padding: 16px; }
+    h2 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    p.sub { color: #666; margin-bottom: 16px; font-size: 12px; }
+    .drop-zone {
+      border: 2px dashed #ccc; border-radius: 8px; padding: 32px 16px;
+      text-align: center; color: #888; cursor: pointer; transition: border-color 0.2s;
+      margin-bottom: 12px;
+    }
+    .drop-zone.drag-over { border-color: #18a0fb; color: #18a0fb; }
+    .drop-zone input[type=file] { display: none; }
+    .preview {
+      background: #f5f5f5; border-radius: 6px; padding: 10px 12px;
+      max-height: 160px; overflow-y: auto; font-size: 11px; margin-bottom: 12px; display: none;
+    }
+    .preview table { width: 100%; border-collapse: collapse; }
+    .preview th { text-align: left; font-weight: 600; padding-bottom: 4px; color: #555; }
+    .preview td { padding: 2px 4px 2px 0; vertical-align: top; }
+    .preview tr td:first-child { color: #888; padding-right: 12px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .btn-row { display: flex; gap: 8px; }
+    button {
+      flex: 1; padding: 8px; border: none; border-radius: 6px;
+      font-size: 13px; cursor: pointer; font-weight: 500;
+    }
+    #runBtn { background: #18a0fb; color: #fff; }
+    #runBtn:disabled { background: #b0d8fb; cursor: default; }
+    #cancelBtn { background: #f0f0f0; color: #333; }
+    .result { margin-top: 14px; font-size: 12px; display: none; }
+    .result.success { color: #1a7f37; }
+    .result.error { color: #c0392b; }
+    .log { margin-top: 10px; background: #f9f9f9; border-radius: 6px; padding: 8px 10px; max-height: 120px; overflow-y: auto; font-size: 11px; display: none; }
+    .log-item { padding: 2px 0; border-bottom: 1px solid #eee; }
+    .log-item:last-child { border-bottom: none; }
+    .tag { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 10px; margin-right: 4px; }
+    .tag.replaced { background: #d4edda; color: #1a7f37; }
+    .tag.error { background: #fde8e8; color: #c0392b; }
+    a.template-link { font-size: 11px; color: #18a0fb; cursor: pointer; display: block; margin-bottom: 14px; }
+    .progress { display: none; margin-top: 14px; }
+    .progress-label { font-size: 12px; color: #555; margin-bottom: 6px; }
+    .progress-track { background: #eee; border-radius: 4px; height: 6px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #18a0fb; border-radius: 4px; width: 0%; transition: width 0.15s ease; }
+  </style>
+</head>
+<body>
+  <h2>CSV Text Translator</h2>
+  <p class="sub">Replace text in this file using a CSV with two columns: <strong>source</strong> and <strong>target</strong>.</p>
+
+  <a class="template-link" id="downloadTemplate">Download CSV template</a>
+
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept=".csv">
+    <div id="dropLabel">Drop your CSV here or <u>click to browse</u></div>
+  </div>
+
+  <div class="preview" id="preview">
+    <table>
+      <thead><tr><th>Source</th><th>Target</th></tr></thead>
+      <tbody id="previewBody"></tbody>
+    </table>
+  </div>
+
+  <div class="btn-row">
+    <button id="runBtn" disabled>Replace Text</button>
+    <button id="cancelBtn">Cancel</button>
+  </div>
+
+  <div class="progress" id="progress">
+    <div class="progress-label" id="progressLabel">Scanning nodes…</div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <div class="result" id="result"></div>
+  <div class="log" id="log"></div>
+
+  <script>
+    let translations = [];
+
+    // Template download
+    document.getElementById("downloadTemplate").addEventListener("click", () => {
+      const csv = "source,target\nHello world,Bonjour le monde\nThank you,Merci";
+      const blob = new Blob([csv], { type: "text/csv" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "translations.csv";
+      a.click();
+    });
+
+    // Drop zone
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+
+    dropZone.addEventListener("click", () => fileInput.click());
+    dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("drag-over"); });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("drag-over");
+      if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener("change", () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        translations = parseCSV(e.target.result);
+        showPreview(translations);
+        document.getElementById("runBtn").disabled = translations.length === 0;
+        document.getElementById("dropLabel").textContent = `✓ ${file.name} — ${translations.length} rows loaded`;
+      };
+      reader.readAsText(file);
+    }
+
+    function parseCSV(text) {
+      const result = [];
+      let i = text.charCodeAt(0) === 0xFEFF ? 1 : 0; // strip BOM
+      let isHeader = true;
+
+      function parseField() {
+        if (i >= text.length) return null;
+        if (text[i] === '"') {
+          i++;
+          let field = '';
+          while (i < text.length) {
+            if (text[i] === '"' && text[i + 1] === '"') { field += '"'; i += 2; }
+            else if (text[i] === '"') { i++; break; }
+            else { field += text[i++]; }
+          }
+          return field;
+        } else {
+          let field = '';
+          while (i < text.length && text[i] !== ',' && text[i] !== '\n' && text[i] !== '\r') {
+            field += text[i++];
+          }
+          return field;
+        }
+      }
+
+      while (i < text.length) {
+        const cols = [];
+        while (true) {
+          const field = parseField();
+          if (field === null) break;
+          cols.push(field);
+          if (i < text.length && text[i] === ',') { i++; continue; }
+          if (i < text.length && text[i] === '\r') i++;
+          if (i < text.length && text[i] === '\n') i++;
+          break;
+        }
+        if (cols.length === 0) break;
+        if (isHeader) { isHeader = false; continue; }
+        if (cols.length >= 2 && cols[0].trim() && cols[1].trim()) {
+          result.push({ source: cols[0].trim(), target: cols[1].trim() });
+        }
+      }
+      return result;
+    }
+
+    function showPreview(rows) {
+      const tbody = document.getElementById("previewBody");
+      tbody.innerHTML = "";
+      const show = rows.slice(0, 20);
+      for (const row of show) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td title="${esc(row.source)}">${esc(row.source)}</td><td>${esc(row.target)}</td>`;
+        tbody.appendChild(tr);
+      }
+      if (rows.length > 20) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="2" style="color:#aaa">…and ${rows.length - 20} more rows</td>`;
+        tbody.appendChild(tr);
+      }
+      document.getElementById("preview").style.display = "block";
+    }
+
+    function esc(s) {
+      return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    document.getElementById("runBtn").addEventListener("click", () => {
+      document.getElementById("runBtn").disabled = true;
+      document.getElementById("result").style.display = "none";
+      document.getElementById("log").style.display = "none";
+      document.getElementById("progress").style.display = "block";
+      document.getElementById("progressFill").style.width = "0%";
+      document.getElementById("progressLabel").textContent = "Scanning nodes…";
+      parent.postMessage({ pluginMessage: { type: "replace", translations } }, "*");
+    });
+
+    document.getElementById("cancelBtn").addEventListener("click", () => {
+      parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
+    });
+
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      if (!msg) return;
+
+      if (msg.type === "progress") {
+        const pct = Math.round((msg.current / msg.total) * 100);
+        document.getElementById("progressFill").style.width = pct + "%";
+        document.getElementById("progressLabel").textContent = `Scanning nodes… ${msg.current} / ${msg.total}`;
+        return;
+      }
+
+      if (msg.type !== "done") return;
+
+      document.getElementById("progress").style.display = "none";
+      const resultEl = document.getElementById("result");
+      resultEl.className = "result success";
+      const notFoundCount = msg.notFound ? msg.notFound.length : 0;
+      resultEl.innerHTML =
+        `<strong>Done</strong><br>` +
+        `${msg.replaced} node(s) replaced<br>` +
+        `${notFoundCount} CSV row(s) not found in file` +
+        (msg.skipped > 0 ? `<br>${msg.skipped} error(s) while replacing` : "");
+      resultEl.style.display = "block";
+      document.getElementById("runBtn").disabled = false;
+
+      const logLines = [];
+      if (msg.notFound && msg.notFound.length > 0) {
+        logLines.push(...msg.notFound.map(s =>
+          `<div class="log-item"><span class="tag error">not found</span>${esc(s)}</div>`
+        ));
+      }
+      if (msg.log && msg.log.length > 0) {
+        logLines.push(...msg.log.map(l =>
+          `<div class="log-item"><span class="tag ${l.status}">${l.status}</span>${esc(l.from)} → ${l.status === "replaced" ? esc(l.to) : l.error}</div>`
+        ));
+      }
+      if (logLines.length > 0) {
+        const logEl = document.getElementById("log");
+        logEl.innerHTML = logLines.join("");
+        logEl.style.display = "block";
+      }
+    };
+  </script>
+</body>
+</html>
