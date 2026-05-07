@@ -24,7 +24,7 @@ This avoids manual copy/paste and makes large-scale localization dramatically fa
 
 # Requirements
 
-- Claude Desktop
+- Claude Code
 - Figma MCP setup
 - A Figma personal access token
 - The Figma Translation Plugin
@@ -36,7 +36,8 @@ This avoids manual copy/paste and makes large-scale localization dramatically fa
 
 ## 1. Install the Plugin
 
-Import or run the plugin inside Figma.
+In Figma:
+- Plugin > Developer > Import Plugin from Manifest (select manifest.json)
 
 ## 2. Configure Figma MCP
 
@@ -88,10 +89,9 @@ Claude will:
 ## Step 4 — Import CSV Into Plugin
 
 In Figma:
-1. Install the plugin: Plugin > Developer > Import Plugin from Manifest (select manifest.json)
-2. Run the plugin
-3. Upload the generated CSV
-4. The plugin will find and replace matching text layers
+1. Run the plugin
+2. Upload the generated CSV
+3. The plugin will find and replace matching text layers
 
 
 ---
