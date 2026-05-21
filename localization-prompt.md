@@ -116,15 +116,20 @@ temperature
 name
 text
 
-Example:
+FINAL OUTPUT RULES:
 
-source,target,mode,layer_id,layer_name,pattern_type
-"New York","San Francisco",localization,234:12,City Label,text
-"January 15, 2024","15 January 2024",localization,234:102,Event Date,date
-
-IMPORTANT:
-Output ONLY raw CSV content.
-Do not include explanations, markdown, code fences, or commentary.
+- Your final response MUST contain ONLY raw RFC 4180 CSV content
+- Do NOT explain your work
+- Do NOT summarize changes
+- Do NOT describe what was updated
+- Do NOT use markdown
+- Do NOT use code fences
+- Do NOT prepend or append commentary
+- Begin immediately with:
+  source,target,mode,layer_id,layer_name,pattern_type
+- If you cannot fit the entire CSV in one response, continue outputting CSV rows only.
+- Never switch into explanation mode.
+- After the CSV is complete, stop immediately
 ```
 
 ---
