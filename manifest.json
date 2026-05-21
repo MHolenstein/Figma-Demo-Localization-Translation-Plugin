@@ -1,5 +1,5 @@
 {
-  "name": "CSV Text Translator",
+  "name": "Figma Localization & Translation Plugin",
   "id": "csv-text-translator-local",
   "api": "1.0.0",
   "main": "code.js",
