@@ -118,18 +118,20 @@ text
 
 FINAL OUTPUT RULES:
 
-- Your final response MUST contain ONLY raw RFC 4180 CSV content
-- Do NOT explain your work
-- Do NOT summarize changes
-- Do NOT describe what was updated
-- Do NOT use markdown
-- Do NOT use code fences
-- Do NOT prepend or append commentary
-- Begin immediately with:
-  source,target,mode,layer_id,layer_name,pattern_type
-- If you cannot fit the entire CSV in one response, continue outputting CSV rows only.
-- Never switch into explanation mode.
-- After the CSV is complete, stop immediately
+Write the complete CSV to a file named:
+localization-output.csv
+Save the file in the current project root
+The file must contain ONLY valid RFC 4180 CSV content
+Quote ALL CSV fields
+Escape internal quotes using double quotes ("")
+Example:
+He said "Hello"
+becomes:
+"He said ""Hello"""
+Do NOT truncate long text nodes
+Do NOT summarize or explain the changes
+After saving the file, reply ONLY with:
+localization-output.csv saved
 ```
 
 ---
