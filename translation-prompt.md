@@ -22,3 +22,13 @@ You are helping translate a Figma design file using a CSV find-and-replace plugi
 
 Target language: **[French / Spanish / German / etc.]**
 Figma URL: **[paste URL here]**
+
+---
+
+## Note on CSV format compatibility
+
+The plugin now supports an extended 6-column CSV format:
+```
+source,target,mode,layer_id,layer_name,pattern_type
+```
+The 2-column `source,target` output from this prompt is still fully supported — the plugin will treat all rows as `mode=translation` and match by text content. If you want layer-targeted replacement (more precise, navigable in the review dialog), ask Claude to also capture `node.id` and output the extended format with `layer_id` populated.

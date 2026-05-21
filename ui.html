@@ -5,49 +5,100 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Inter, sans-serif; font-size: 13px; color: #1a1a1a; background: #fff; padding: 16px; }
     h2 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-    p.sub { color: #666; margin-bottom: 16px; font-size: 12px; }
+    p.sub { color: #666; margin-bottom: 14px; font-size: 12px; }
+
+    /* Upload area */
     .drop-zone {
-      border: 2px dashed #ccc; border-radius: 8px; padding: 32px 16px;
+      border: 2px dashed #ccc; border-radius: 8px; padding: 24px 16px;
       text-align: center; color: #888; cursor: pointer; transition: border-color 0.2s;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .drop-zone.drag-over { border-color: #18a0fb; color: #18a0fb; }
     .drop-zone input[type=file] { display: none; }
-    .preview {
-      background: #f5f5f5; border-radius: 6px; padding: 10px 12px;
-      max-height: 160px; overflow-y: auto; font-size: 11px; margin-bottom: 12px; display: none;
+    a.template-link { font-size: 11px; color: #18a0fb; cursor: pointer; display: block; margin-bottom: 12px; }
+
+    /* Review table */
+    .review { display: none; margin-bottom: 12px; }
+    .review-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 6px; font-size: 12px; color: #555;
     }
-    .preview table { width: 100%; border-collapse: collapse; }
-    .preview th { text-align: left; font-weight: 600; padding-bottom: 4px; color: #555; }
-    .preview td { padding: 2px 4px 2px 0; vertical-align: top; }
-    .preview tr td:first-child { color: #888; padding-right: 12px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .review-header strong { font-size: 13px; color: #1a1a1a; }
+    .review-controls { display: flex; gap: 8px; }
+    .review-controls button {
+      font-size: 11px; padding: 2px 8px; border: 1px solid #ddd;
+      border-radius: 4px; background: #fff; cursor: pointer; color: #555; flex: none;
+    }
+    .review-controls button:hover { background: #f5f5f5; }
+    .review-table-wrap {
+      border: 1px solid #e8e8e8; border-radius: 6px;
+      max-height: 340px; overflow-y: auto;
+    }
+    table.review-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+    table.review-tbl thead th {
+      position: sticky; top: 0; background: #f5f5f5;
+      padding: 6px 8px; text-align: left; font-weight: 600; color: #555;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    table.review-tbl thead th:first-child { width: 28px; }
+    table.review-tbl tbody tr { border-bottom: 1px solid #f0f0f0; cursor: default; }
+    table.review-tbl tbody tr:last-child { border-bottom: none; }
+    table.review-tbl tbody tr.has-id { cursor: pointer; }
+    table.review-tbl tbody tr.has-id:hover { background: #f0f7ff; }
+    table.review-tbl tbody tr.checked-row td { background: transparent; }
+    table.review-tbl tbody tr:not(.checked-row) td { opacity: 0.4; }
+    table.review-tbl td { padding: 5px 8px; vertical-align: top; }
+    table.review-tbl td:first-child { text-align: center; width: 28px; }
+    .cell-src { color: #888; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cell-tgt { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cell-layer { color: #aaa; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Pattern-type badges */
+    .badge {
+      display: inline-block; padding: 1px 5px; border-radius: 3px;
+      font-size: 10px; font-weight: 500; white-space: nowrap;
+    }
+    .badge-translation  { background: #e8f0fe; color: #1a73e8; }
+    .badge-date         { background: #fce8ff; color: #9c27b0; }
+    .badge-currency     { background: #e6f4ea; color: #1e8e3e; }
+    .badge-phone        { background: #fef3e2; color: #e37400; }
+    .badge-address      { background: #fde8e8; color: #c0392b; }
+    .badge-temperature  { background: #e8f5fe; color: #0277bd; }
+    .badge-name         { background: #f3e5f5; color: #7b1fa2; }
+    .badge-text         { background: #f5f5f5; color: #555; }
+
+    /* Buttons */
     .btn-row { display: flex; gap: 8px; }
-    button {
+    button.primary, button.secondary {
       flex: 1; padding: 8px; border: none; border-radius: 6px;
       font-size: 13px; cursor: pointer; font-weight: 500;
     }
-    #runBtn { background: #18a0fb; color: #fff; }
-    #runBtn:disabled { background: #b0d8fb; cursor: default; }
-    #cancelBtn { background: #f0f0f0; color: #333; }
-    .result { margin-top: 14px; font-size: 12px; display: none; }
-    .result.success { color: #1a7f37; }
-    .result.error { color: #c0392b; }
-    .log { margin-top: 10px; background: #f9f9f9; border-radius: 6px; padding: 8px 10px; max-height: 120px; overflow-y: auto; font-size: 11px; display: none; }
+    button.primary { background: #18a0fb; color: #fff; }
+    button.primary:disabled { background: #b0d8fb; cursor: default; }
+    button.secondary { background: #f0f0f0; color: #333; }
+
+    /* Progress */
+    .progress { display: none; margin-top: 14px; }
+    .progress-label { font-size: 12px; color: #555; margin-bottom: 6px; }
+    .progress-track { background: #eee; border-radius: 4px; height: 8px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #18a0fb; border-radius: 4px; width: 0%; transition: width 0.12s ease; }
+    .progress-fill.done { background: #1a7f37; transition: background 0.3s ease; }
+    .progress-label.done { color: #1a7f37; font-weight: 600; }
+    .progress-detail { font-size: 11px; color: #888; margin-top: 4px; min-height: 16px; }
+
+    /* Results log */
+    .result { display: none; }
+    .log { margin-top: 10px; background: #f9f9f9; border-radius: 6px; padding: 8px 10px; max-height: 110px; overflow-y: auto; font-size: 11px; display: none; }
     .log-item { padding: 2px 0; border-bottom: 1px solid #eee; }
     .log-item:last-child { border-bottom: none; }
     .tag { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 10px; margin-right: 4px; }
     .tag.replaced { background: #d4edda; color: #1a7f37; }
-    .tag.error { background: #fde8e8; color: #c0392b; }
-    a.template-link { font-size: 11px; color: #18a0fb; cursor: pointer; display: block; margin-bottom: 14px; }
-    .progress { display: none; margin-top: 14px; }
-    .progress-label { font-size: 12px; color: #555; margin-bottom: 6px; }
-    .progress-track { background: #eee; border-radius: 4px; height: 6px; overflow: hidden; }
-    .progress-fill { height: 100%; background: #18a0fb; border-radius: 4px; width: 0%; transition: width 0.15s ease; }
+    .tag.error    { background: #fde8e8; color: #c0392b; }
   </style>
 </head>
 <body>
-  <h2>CSV Text Translator</h2>
-  <p class="sub">Replace text in this file using a CSV with two columns: <strong>source</strong> and <strong>target</strong>.</p>
+  <h2>Figma Localization &amp; Translation Plugin</h2>
+  <p class="sub">Supports translation and localization CSVs. Upload a CSV to review and apply changes.</p>
 
   <a class="template-link" id="downloadTemplate">Download CSV template</a>
 
@@ -56,45 +107,68 @@
     <div id="dropLabel">Drop your CSV here or <u>click to browse</u></div>
   </div>
 
-  <div class="preview" id="preview">
-    <table>
-      <thead><tr><th>Source</th><th>Target</th></tr></thead>
-      <tbody id="previewBody"></tbody>
-    </table>
+  <!-- Review section (replaces old static preview) -->
+  <div class="review" id="review">
+    <div class="review-header">
+      <strong id="reviewTitle">0 changes to review</strong>
+      <div class="review-controls">
+        <button id="selectAll">All</button>
+        <button id="selectNone">None</button>
+      </div>
+    </div>
+    <div class="review-table-wrap">
+      <table class="review-tbl">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Source</th>
+            <th>Target</th>
+            <th>Type</th>
+            <th>Layer</th>
+          </tr>
+        </thead>
+        <tbody id="reviewBody"></tbody>
+      </table>
+    </div>
   </div>
 
-  <div class="btn-row">
-    <button id="runBtn" disabled>Replace Text</button>
-    <button id="cancelBtn">Cancel</button>
+  <div class="btn-row" style="margin-top:12px">
+    <button class="primary" id="runBtn" disabled>Apply Changes</button>
+    <button class="secondary" id="cancelBtn">Cancel</button>
   </div>
 
   <div class="progress" id="progress">
-    <div class="progress-label" id="progressLabel">Scanning nodes…</div>
+    <div class="progress-label" id="progressLabel">Applying changes…</div>
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-detail" id="progressDetail"></div>
   </div>
 
   <div class="result" id="result"></div>
   <div class="log" id="log"></div>
 
   <script>
-    let translations = [];
+    let allRows = []; // parsed from CSV, extended schema
+    let checkedSet = new Set(); // indices of checked rows
 
-    // Template download
+    // ── Template download ───────────────────────────────────────────────────
     document.getElementById("downloadTemplate").addEventListener("click", () => {
-      const csv = "source,target\nHello world,Bonjour le monde\nThank you,Merci";
+      const csv = "source,target,mode,layer_id,layer_name,pattern_type\n" +
+                  "Hello world,Bonjour le monde,translation,,,\n" +
+                  "$24.99,£19.99,localization,123:456,Price Label,currency\n" +
+                  "January 15 2024,15 January 2024,localization,,Date Field,date";
       const blob = new Blob([csv], { type: "text/csv" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = "translations.csv";
+      a.download = "translations-template.csv";
       a.click();
     });
 
-    // Drop zone
-    const dropZone = document.getElementById("dropZone");
+    // ── Drop zone ───────────────────────────────────────────────────────────
+    const dropZone  = document.getElementById("dropZone");
     const fileInput = document.getElementById("fileInput");
 
     dropZone.addEventListener("click", () => fileInput.click());
-    dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("drag-over"); });
+    dropZone.addEventListener("dragover",  (e) => { e.preventDefault(); dropZone.classList.add("drag-over"); });
     dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
     dropZone.addEventListener("drop", (e) => {
       e.preventDefault();
@@ -106,18 +180,23 @@
     function handleFile(file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        translations = parseCSV(e.target.result);
-        showPreview(translations);
-        document.getElementById("runBtn").disabled = translations.length === 0;
-        document.getElementById("dropLabel").textContent = `✓ ${file.name} — ${translations.length} rows loaded`;
+        allRows = parseCSV(e.target.result);
+        checkedSet = new Set(allRows.map((_, i) => i)); // all checked by default
+        renderReview();
+        document.getElementById("runBtn").disabled = allRows.length === 0;
+        document.getElementById("dropLabel").textContent =
+          `✓ ${file.name} — ${allRows.length} row${allRows.length !== 1 ? "s" : ""} loaded`;
+        // Hide old results when a new file is loaded
+        document.getElementById("result").style.display = "none";
+        document.getElementById("log").style.display    = "none";
       };
       reader.readAsText(file);
     }
 
+    // ── CSV parser (extended — backward compatible with 2-column CSVs) ──────
     function parseCSV(text) {
       const result = [];
       let i = text.charCodeAt(0) === 0xFEFF ? 1 : 0; // strip BOM
-      let isHeader = true;
 
       function parseField() {
         if (i >= text.length) return null;
@@ -139,9 +218,9 @@
         }
       }
 
-      while (i < text.length) {
+      function parseLine() {
         const cols = [];
-        while (true) {
+        while (i < text.length) {
           const field = parseField();
           if (field === null) break;
           cols.push(field);
@@ -150,50 +229,176 @@
           if (i < text.length && text[i] === '\n') i++;
           break;
         }
+        return cols;
+      }
+
+      // Header — detect column positions dynamically so column order doesn't matter
+      const headerCols = parseLine().map(c => c.trim().toLowerCase());
+      if (headerCols.length === 0) return result;
+
+      const col = {
+        source:       headerCols.indexOf("source"),
+        target:       headerCols.indexOf("target"),
+        mode:         headerCols.indexOf("mode"),
+        layer_id:     headerCols.indexOf("layer_id"),
+        layer_name:   headerCols.indexOf("layer_name"),
+        pattern_type: headerCols.indexOf("pattern_type"),
+      };
+
+      // Legacy 2-column CSVs have a "source,target" header that we already consumed above.
+      // If the header didn't match our column names, fall back to positional columns 0/1.
+      const hasNamedHeaders = col.source !== -1 && col.target !== -1;
+      if (!hasNamedHeaders) {
+        col.source = 0; col.target = 1;
+      }
+
+      while (i < text.length) {
+        const cols = parseLine();
         if (cols.length === 0) break;
-        if (isHeader) { isHeader = false; continue; }
-        if (cols.length >= 2 && cols[0].trim() && cols[1].trim()) {
-          result.push({ source: cols[0].trim(), target: cols[1].trim() });
-        }
+
+        const src = col.source !== -1 && cols[col.source] ? cols[col.source].trim() : "";
+        const tgt = col.target !== -1 && cols[col.target] ? cols[col.target].trim() : "";
+        if (!src || !tgt) continue;
+
+        result.push({
+          source:       src,
+          target:       tgt,
+          mode:         col.mode         !== -1 ? (cols[col.mode]         || "translation").trim() : "translation",
+          layer_id:     col.layer_id     !== -1 ? (cols[col.layer_id]     || "").trim()            : "",
+          layer_name:   col.layer_name   !== -1 ? (cols[col.layer_name]   || "").trim()            : "",
+          pattern_type: col.pattern_type !== -1 ? (cols[col.pattern_type] || "text").trim()        : "text",
+        });
       }
       return result;
     }
 
-    function showPreview(rows) {
-      const tbody = document.getElementById("previewBody");
-      tbody.innerHTML = "";
-      const show = rows.slice(0, 20);
-      for (const row of show) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td title="${esc(row.source)}">${esc(row.source)}</td><td>${esc(row.target)}</td>`;
-        tbody.appendChild(tr);
-      }
-      if (rows.length > 20) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td colspan="2" style="color:#aaa">…and ${rows.length - 20} more rows</td>`;
-        tbody.appendChild(tr);
-      }
-      document.getElementById("preview").style.display = "block";
+    // ── Review table rendering ───────────────────────────────────────────────
+    const BADGE_CLASS = {
+      translation: "badge-translation",
+      date:        "badge-date",
+      currency:    "badge-currency",
+      phone:       "badge-phone",
+      address:     "badge-address",
+      temperature: "badge-temperature",
+      name:        "badge-name",
+      text:        "badge-text",
+    };
+
+    function badgeFor(row) {
+      const label = row.mode === "localization"
+        ? (row.pattern_type && row.pattern_type !== "text" ? row.pattern_type : "localization")
+        : "translation";
+      const cls = BADGE_CLASS[row.pattern_type] || BADGE_CLASS[row.mode] || "badge-text";
+      return `<span class="badge ${cls}">${esc(label)}</span>`;
     }
 
-    function esc(s) {
-      return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    function renderReview() {
+      const tbody = document.getElementById("reviewBody");
+      tbody.innerHTML = "";
+
+      for (let idx = 0; idx < allRows.length; idx++) {
+        const row = allRows[idx];
+        const checked  = checkedSet.has(idx);
+        const hasId    = !!row.layer_id;
+        const layerLbl = row.layer_name || (hasId ? row.layer_id : "");
+
+        const tr = document.createElement("tr");
+        tr.dataset.idx = idx;
+        tr.className = (checked ? "checked-row" : "") + (hasId ? " has-id" : "");
+
+        tr.innerHTML =
+          `<td><input type="checkbox" data-idx="${idx}" ${checked ? "checked" : ""}></td>` +
+          `<td class="cell-src" title="${esc(row.source)}">${esc(row.source)}</td>` +
+          `<td class="cell-tgt" title="${esc(row.target)}">${esc(row.target)}</td>` +
+          `<td>${badgeFor(row)}</td>` +
+          `<td class="cell-layer" title="${esc(layerLbl)}">${esc(layerLbl)}</td>`;
+
+        // Checkbox toggle
+        tr.querySelector("input[type=checkbox]").addEventListener("change", (e) => {
+          e.stopPropagation();
+          toggleRow(idx, e.target.checked);
+        });
+
+        // Row click → navigate (only if has layer_id; don't fire when clicking checkbox)
+        if (hasId) {
+          tr.addEventListener("click", (e) => {
+            if (e.target.type === "checkbox") return;
+            parent.postMessage({ pluginMessage: { type: "navigate", layerId: row.layer_id } }, "*");
+          });
+        }
+
+        tbody.appendChild(tr);
+      }
+
+      document.getElementById("review").style.display = "block";
+      updateReviewTitle();
     }
+
+    function toggleRow(idx, checked) {
+      if (checked) checkedSet.add(idx);
+      else checkedSet.delete(idx);
+      const tr = document.querySelector(`tr[data-idx="${idx}"]`);
+      if (tr) {
+        tr.classList.toggle("checked-row", checked);
+      }
+      updateReviewTitle();
+      document.getElementById("runBtn").disabled = checkedSet.size === 0;
+    }
+
+    function updateReviewTitle() {
+      const n = checkedSet.size;
+      document.getElementById("reviewTitle").textContent =
+        `${n} change${n !== 1 ? "s" : ""} selected`;
+      document.getElementById("runBtn").textContent = `Apply ${n} Change${n !== 1 ? "s" : ""}`;
+    }
+
+    document.getElementById("selectAll").addEventListener("click", () => {
+      allRows.forEach((_, i) => checkedSet.add(i));
+      document.querySelectorAll("tr[data-idx]").forEach(tr => {
+        tr.classList.add("checked-row");
+        tr.querySelector("input[type=checkbox]").checked = true;
+      });
+      updateReviewTitle();
+      document.getElementById("runBtn").disabled = checkedSet.size === 0;
+    });
+
+    document.getElementById("selectNone").addEventListener("click", () => {
+      checkedSet.clear();
+      document.querySelectorAll("tr[data-idx]").forEach(tr => {
+        tr.classList.remove("checked-row");
+        tr.querySelector("input[type=checkbox]").checked = false;
+      });
+      updateReviewTitle();
+      document.getElementById("runBtn").disabled = true;
+    });
+
+    // ── Apply ────────────────────────────────────────────────────────────────
+    let applyTotal = 0;
 
     document.getElementById("runBtn").addEventListener("click", () => {
+      const selected = allRows.filter((_, i) => checkedSet.has(i));
+      applyTotal = selected.length;
       document.getElementById("runBtn").disabled = true;
       document.getElementById("result").style.display = "none";
-      document.getElementById("log").style.display = "none";
+      document.getElementById("log").style.display    = "none";
+      // Reset progress to in-progress state
+      const fill  = document.getElementById("progressFill");
+      const label = document.getElementById("progressLabel");
+      const detail = document.getElementById("progressDetail");
+      fill.className  = "progress-fill";
+      fill.style.width = "0%";
+      label.className = "progress-label";
+      label.textContent = "Applying changes…";
+      detail.textContent = "0 of " + applyTotal;
       document.getElementById("progress").style.display = "block";
-      document.getElementById("progressFill").style.width = "0%";
-      document.getElementById("progressLabel").textContent = "Scanning nodes…";
-      parent.postMessage({ pluginMessage: { type: "replace", translations } }, "*");
+      parent.postMessage({ pluginMessage: { type: "replace", translations: selected } }, "*");
     });
 
     document.getElementById("cancelBtn").addEventListener("click", () => {
       parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
     });
 
+    // ── Messages from plugin backend ─────────────────────────────────────────
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
       if (!msg) return;
@@ -201,41 +406,58 @@
       if (msg.type === "progress") {
         const pct = Math.round((msg.current / msg.total) * 100);
         document.getElementById("progressFill").style.width = pct + "%";
-        document.getElementById("progressLabel").textContent = `Scanning nodes… ${msg.current} / ${msg.total}`;
+        document.getElementById("progressDetail").textContent =
+          "Applying " + msg.current + " of " + msg.total + " changes…";
+        return;
+      }
+
+      if (msg.type === "navigate-result") {
         return;
       }
 
       if (msg.type !== "done") return;
 
-      document.getElementById("progress").style.display = "none";
-      const resultEl = document.getElementById("result");
-      resultEl.className = "result success";
-      const notFoundCount = msg.notFound ? msg.notFound.length : 0;
-      resultEl.innerHTML =
-        `<strong>Done</strong><br>` +
-        `${msg.replaced} node(s) replaced<br>` +
-        `${notFoundCount} CSV row(s) not found in file` +
-        (msg.skipped > 0 ? `<br>${msg.skipped} error(s) while replacing` : "");
-      resultEl.style.display = "block";
-      document.getElementById("runBtn").disabled = false;
+      // Green completion state — keep the progress bar visible, turn it green
+      const fill  = document.getElementById("progressFill");
+      const label = document.getElementById("progressLabel");
+      const detail = document.getElementById("progressDetail");
+      fill.style.width = "100%";
+      fill.className   = "progress-fill done";
+      label.className  = "progress-label done";
+      label.textContent = "✓ Done";
 
-      const logLines = [];
+      const notFoundCount = msg.notFound ? msg.notFound.length : 0;
+      const parts = [msg.replaced + " change" + (msg.replaced !== 1 ? "s" : "") + " applied"];
+      if (notFoundCount > 0) parts.push(notFoundCount + " not matched");
+      if (msg.skipped  > 0) parts.push(msg.skipped + " error" + (msg.skipped !== 1 ? "s" : ""));
+      detail.textContent = parts.join(" · ");
+
+      document.getElementById("runBtn").disabled = checkedSet.size === 0;
+
+      var logLines = [];
       if (msg.notFound && msg.notFound.length > 0) {
-        logLines.push(...msg.notFound.map(s =>
-          `<div class="log-item"><span class="tag error">not found</span>${esc(s)}</div>`
-        ));
+        for (var ni = 0; ni < msg.notFound.length; ni++) {
+          logLines.push('<div class="log-item"><span class="tag error">not found</span>' + esc(msg.notFound[ni]) + '</div>');
+        }
       }
       if (msg.log && msg.log.length > 0) {
-        logLines.push(...msg.log.map(l =>
-          `<div class="log-item"><span class="tag ${l.status}">${l.status}</span>${esc(l.from)} → ${l.status === "replaced" ? esc(l.to) : l.error}</div>`
-        ));
+        for (var li = 0; li < msg.log.length; li++) {
+          var l = msg.log[li];
+          logLines.push('<div class="log-item"><span class="tag ' + l.status + '">' + l.status + '</span>' +
+            esc(l.from) + ' → ' + (l.status === "replaced" ? esc(l.to) : esc(l.error || "")) + '</div>');
+        }
       }
       if (logLines.length > 0) {
-        const logEl = document.getElementById("log");
+        var logEl = document.getElementById("log");
         logEl.innerHTML = logLines.join("");
         logEl.style.display = "block";
       }
     };
+
+    function esc(s) {
+      if (!s) return "";
+      return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
   </script>
 </body>
 </html>
