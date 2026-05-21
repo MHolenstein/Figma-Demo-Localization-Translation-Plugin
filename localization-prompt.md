@@ -76,6 +76,8 @@ Currency changes should usually be symbolic/formatting only
 Only include rows where a localization change is needed
 Do NOT translate general UI copy/buttons/navigation
 Preserve punctuation and formatting where possible
+Preserve inline formatting tokens, markup wrappers, and template syntax when present.
+Only localize the human-readable content inside them.
 Generate realistic locale-appropriate synthetic data
 Use exact Figma node.id values
 
