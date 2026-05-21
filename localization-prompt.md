@@ -55,6 +55,7 @@ spelling variants
 locale-specific terminology
 synthetic names/data
 region-specific formatting conventions
+spelling and terminology variants for the target market's English locale
 
 The amount of localization should match the target market.
 Some market changes may require only a few updates.
@@ -77,10 +78,23 @@ Do NOT translate general UI copy/buttons/navigation
 Preserve punctuation and formatting where possible
 Generate realistic locale-appropriate synthetic data
 Use exact Figma node.id values
+
 When dates appear to be related to the event timeline, shift them appropriately relative to the TARGET EVENT DATE
 Preserve relative timing for dates that appear connected to the event
 Infer source date formatting from the existing text
 
+If the TARGET MARKET is an English-speaking locale, update spelling and terminology to match that locale's English variant
+(for example: British English for London, Australian English for Sydney)
+
+If the TARGET MARKET is not English-speaking, do NOT translate the general language in localization mode
+Only update localization details such as dates, currencies, units, addresses, and local place references
+
+A single text node may require multiple localization changes at once
+(for example: city names, spelling variants, dates, and formatting in the same sentence)
+
+The target value should represent the FULL final localized text for the node
+
+Do NOT output partial replacements for isolated words or phrases
 
 OUTPUT FORMAT
 
