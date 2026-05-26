@@ -1,7 +1,6 @@
 # Claude Translation Prompt
 
 Use this prompt when you want Claude to generate a **translation CSV** from a Figma page via the MCP connection. This is for full language translation of UI copy, messaging, labels, and interface text — **not** for market-specific localization-only changes (use `localization-prompt.md` for that).
----
 
 ## Prompt to give Claude
 
