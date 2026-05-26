@@ -12,11 +12,16 @@ function normalize(str) {
 figma.ui.onmessage = async (msg) => {
   if (msg.type === "replace") {
     const results = await replaceText(msg.translations);
+    highlightChangedNodes(results.changedNodeIds);
     figma.ui.postMessage(Object.assign({ type: "done" }, results));
   }
 
   if (msg.type === "navigate") {
     await navigateToLayer(msg.layerId);
+  }
+
+  if (msg.type === "clear-highlights") {
+    clearHighlights();
   }
 
   if (msg.type === "cancel") {
@@ -66,6 +71,7 @@ async function replaceText(translations) {
   let replaced = 0;
   let skipped  = 0;
   const log = [];
+  const changedNodeIds = [];
 
   // ── Layer-ID targeted replacements ───────────────────────────────────────
   for (const row of idRows) {
@@ -81,6 +87,7 @@ async function replaceText(translations) {
         for (const f of fonts) await figma.loadFontAsync(f);
         node.characters = row.target;
         replaced++;
+        changedNodeIds.push(node.id);
         log.push({ status: "replaced", from: before, to: row.target, layer: row.layer_name || node.name });
       } catch (e) {
         skipped++;
@@ -103,6 +110,7 @@ async function replaceText(translations) {
         node.characters = row.target;
         matched.add(original);
         replaced++;
+        changedNodeIds.push(node.id);
         log.push({ status: "replaced", from: original, to: row.target, layer: node.name });
       } catch (e) {
         skipped++;
@@ -116,5 +124,40 @@ async function replaceText(translations) {
   map.forEach(function(row, k) {
     if (!matched.has(k)) notFound.push(row.source);
   });
-  return { replaced: replaced, skipped: skipped, log: log, notFound: notFound };
+  return { replaced, skipped, log, notFound, changedNodeIds };
+}
+
+const HIGHLIGHT_GROUP_NAME = "Change Tracking Highlights";
+
+function highlightChangedNodes(nodeIds) {
+  if (!nodeIds || nodeIds.length === 0) return;
+  clearHighlights();
+
+  const rects = [];
+  for (const id of nodeIds) {
+    const node = figma.getNodeById(id);
+    if (!node || !node.absoluteBoundingBox) continue;
+    const { x, y, width, height } = node.absoluteBoundingBox;
+
+    const rect = figma.createRectangle();
+    rect.x = x;
+    rect.y = y;
+    rect.resize(width, height);
+    rect.fills = [{ type: "SOLID", color: { r: 0.094, g: 0.627, b: 0.984 }, opacity: 0.08 }];
+    rect.strokes = [{ type: "SOLID", color: { r: 0.094, g: 0.627, b: 0.984 }, opacity: 1 }];
+    rect.strokeWeight = 2;
+    rect.strokeAlign = "OUTSIDE";
+    rect.name = "highlight";
+    rects.push(rect);
+  }
+
+  if (rects.length === 0) return;
+  const group = figma.group(rects, figma.currentPage);
+  group.name = HIGHLIGHT_GROUP_NAME;
+  group.locked = true;
+}
+
+function clearHighlights() {
+  const existing = figma.currentPage.findOne(n => n.name === HIGHLIGHT_GROUP_NAME);
+  if (existing) existing.remove();
 }
