@@ -116,6 +116,7 @@ phone
 address
 temperature
 name
+url
 text
 
 FINAL OUTPUT RULES:
@@ -149,6 +150,7 @@ source,target,mode,layer_id,layer_name,pattern_type
 "72°F","22°C",localization,234:141,Temperature Display,temperature
 "John Smith","James Hartley",localization,234:154,User Name,name
 "zip code","postcode",localization,234:167,Form Label,text
+"https://example.com/us/en/product","https://example.com/gb/en/product",localization,234:180,Product Link,url
 ```
 
 ---
@@ -158,5 +160,7 @@ source,target,mode,layer_id,layer_name,pattern_type
 - The plugin accepts this CSV directly — upload it, review each row, uncheck anything you want to skip, then click Apply.
 - Rows with a `layer_id` will navigate directly to that layer when clicked in the review dialog.
 - Rows without a `layer_id` will fall back to text matching when possible.
-For best precision and navigation behavior, include layer_id values whenever available.
-- The `localization-prompt.md` and `translation-prompt.md` outputs can be **combined into one CSV** if needed — the plugin handles both `mode` values in a single pass.
+- For best precision and navigation behavior, include layer_id values whenever available.
+- The plugin supports both `mode=localization` and `mode=translation` rows in the same CSV.
+- In most workflows, localization should be performed before translation so that region-specific content (dates, currencies, locations, formatting, terminology) is finalized prior to language translation.
+- After localization is applied, a translation pass can generate the final target-language UI copy.

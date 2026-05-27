@@ -65,6 +65,7 @@
     .badge-address      { background: #fde8e8; color: #c0392b; }
     .badge-temperature  { background: #e8f5fe; color: #0277bd; }
     .badge-name         { background: #f3e5f5; color: #7b1fa2; }
+    .badge-url          { background: #e8f5e9; color: #2e7d32; }
     .badge-text         { background: #f5f5f5; color: #555; }
 
     /* Buttons */
@@ -94,6 +95,15 @@
     .tag { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 10px; margin-right: 4px; }
     .tag.replaced { background: #d4edda; color: #1a7f37; }
     .tag.error    { background: #fde8e8; color: #c0392b; }
+
+    /* Clear highlights button */
+    .highlight-row { display: none; margin-top: 10px; }
+    button.clear-highlights {
+      width: 100%; padding: 7px; border: 1px solid #18a0fb; border-radius: 6px;
+      font-size: 12px; cursor: pointer; font-weight: 500;
+      background: #fff; color: #18a0fb;
+    }
+    button.clear-highlights:hover { background: #f0f7ff; }
   </style>
 </head>
 <body>
@@ -145,6 +155,9 @@
 
   <div class="result" id="result"></div>
   <div class="log" id="log"></div>
+  <div class="highlight-row" id="highlightRow">
+    <button class="clear-highlights" id="clearHighlightsBtn">Clear Highlights</button>
+  </div>
 
   <script>
     let allRows = []; // parsed from CSV, extended schema
@@ -187,8 +200,9 @@
         document.getElementById("dropLabel").textContent =
           `✓ ${file.name} — ${allRows.length} row${allRows.length !== 1 ? "s" : ""} loaded`;
         // Hide old results when a new file is loaded
-        document.getElementById("result").style.display = "none";
-        document.getElementById("log").style.display    = "none";
+        document.getElementById("result").style.display      = "none";
+        document.getElementById("log").style.display         = "none";
+        document.getElementById("highlightRow").style.display = "none";
       };
       reader.readAsText(file);
     }
@@ -281,6 +295,8 @@
       address:     "badge-address",
       temperature: "badge-temperature",
       name:        "badge-name",
+      url:         "badge-url",
+      hyperlink:   "badge-url",
       text:        "badge-text",
     };
 
@@ -398,6 +414,11 @@
       parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
     });
 
+    document.getElementById("clearHighlightsBtn").addEventListener("click", () => {
+      parent.postMessage({ pluginMessage: { type: "clear-highlights" } }, "*");
+      document.getElementById("highlightRow").style.display = "none";
+    });
+
     // ── Messages from plugin backend ─────────────────────────────────────────
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
@@ -433,6 +454,7 @@
       detail.textContent = parts.join(" · ");
 
       document.getElementById("runBtn").disabled = checkedSet.size === 0;
+      document.getElementById("highlightRow").style.display = msg.replaced > 0 ? "block" : "none";
 
       var logLines = [];
       if (msg.notFound && msg.notFound.length > 0) {
