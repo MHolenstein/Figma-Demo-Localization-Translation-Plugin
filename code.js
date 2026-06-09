@@ -35,7 +35,6 @@ async function navigateToLayer(layerId) {
     figma.ui.postMessage({ type: "navigate-result", ok: false });
     return;
   }
-  // Walk up to find the page this node lives on
   let page = node;
   while (page && page.type !== "PAGE") page = page.parent;
   if (page && page.type === "PAGE" && page !== figma.currentPage) {
@@ -50,28 +49,72 @@ async function navigateToLayer(layerId) {
   }
 }
 
+// Load every font used in a text node so Figma allows character-level edits.
+async function loadAllFonts(node) {
+  if (node.characters.length > 0) {
+    const fonts = node.getRangeAllFontNames(0, node.characters.length);
+    for (const f of fonts) await figma.loadFontAsync(f);
+  } else if (node.fontName !== figma.mixed) {
+    await figma.loadFontAsync(node.fontName);
+  } else {
+    await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+  }
+}
+
+// Replace the first occurrence of `source` inside the node's text with `target`,
+// preserving all existing character-level styling outside the replaced range.
+async function applySubstringReplacement(node, source, target) {
+  if (!source) return { ok: false, error: "Empty source substring" };
+
+  const text = node.characters;
+  const idx = text.indexOf(source);
+  if (idx === -1) return { ok: false, error: "Source substring not found in node" };
+
+  try {
+    // All fonts must be loaded before any character-level mutation.
+    if (text.length > 0) {
+      const fonts = node.getRangeAllFontNames(0, text.length);
+      for (const f of fonts) await figma.loadFontAsync(f);
+    }
+    // Insert target at idx BEFORE deleting source so "BEFORE" picks up the
+    // style of the character currently at idx (the first character of source).
+    if (target.length > 0) {
+      node.insertCharacters(idx, target, "BEFORE");
+    }
+    node.deleteCharacters(idx + target.length, idx + target.length + source.length);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
 async function replaceText(translations) {
-  // Rows with a layer_id get direct lookup; rows without fall back to text-matching.
   const idRows   = translations.filter(function(r) { return r.layer_id; });
   const textRows = translations.filter(function(r) { return !r.layer_id; });
 
-  const map = new Map();
-  for (const row of textRows) {
-    if (row.source && row.target) map.set(normalize(row.source), row);
-  }
-  const matched = new Set();
+  // Text-match rows split by mode: translation uses normalized exact-match;
+  // localization uses substring containment search.
+  const translationTextRows  = textRows.filter(function(r) { return r.mode !== "localization"; });
+  const localizationTextRows = textRows.filter(function(r) { return r.mode === "localization"; });
 
-  // Pre-fetch text nodes only when text-matching is needed (avoids the scan for pure id-targeted runs)
-  const allNodes = map.size > 0
+  const translationMap = new Map();
+  for (const row of translationTextRows) {
+    if (row.source && row.target) translationMap.set(normalize(row.source), row);
+  }
+  const translationMatched = new Set();
+  const localizationTextMatchedIdx = new Set();
+
+  const needsScan = translationMap.size > 0 || localizationTextRows.length > 0;
+  const allNodes = needsScan
     ? figma.currentPage.findAllWithCriteria({ types: ["TEXT"] })
     : [];
+
   const totalWork = idRows.length + allNodes.length;
   let progress = 0;
-
   let replaced = 0;
   let skipped  = 0;
   const log = [];
-  const changedNodeIds = [];
+  const changedNodeIdSet = new Set();
 
   // ── Layer-ID targeted replacements ───────────────────────────────────────
   for (const row of idRows) {
@@ -79,15 +122,25 @@ async function replaceText(translations) {
     if (!node || node.type !== "TEXT") {
       skipped++;
       log.push({ status: "error", from: row.source || row.layer_id, error: "Layer not found", layer: row.layer_name || "" });
+    } else if (row.mode === "localization") {
+      // Substring replacement — preserves all rich text formatting outside the changed range.
+      const result = await applySubstringReplacement(node, row.source, row.target);
+      if (result.ok) {
+        replaced++;
+        changedNodeIdSet.add(node.id);
+        log.push({ status: "replaced", from: row.source, to: row.target, layer: row.layer_name || node.name });
+      } else {
+        skipped++;
+        log.push({ status: "error", from: row.source, error: result.error, layer: row.layer_name || node.name });
+      }
     } else {
+      // Translation: full node replacement is intentional (whole sentence rewrite).
       const before = node.characters;
       try {
-        await figma.loadFontAsync(node.fontName === figma.mixed ? { family: "Inter", style: "Regular" } : node.fontName);
-        const fonts = node.getRangeAllFontNames(0, node.characters.length);
-        for (const f of fonts) await figma.loadFontAsync(f);
+        await loadAllFonts(node);
         node.characters = row.target;
         replaced++;
-        changedNodeIds.push(node.id);
+        changedNodeIdSet.add(node.id);
         log.push({ status: "replaced", from: before, to: row.target, layer: row.layer_name || node.name });
       } catch (e) {
         skipped++;
@@ -97,34 +150,56 @@ async function replaceText(translations) {
     figma.ui.postMessage({ type: "progress", current: ++progress, total: totalWork || 1 });
   }
 
-  // ── Text-match replacements (preserves original behavior exactly) ─────────
+  // ── Text-match replacements ───────────────────────────────────────────────
   for (let i = 0; i < allNodes.length; i++) {
-    const node     = allNodes[i];
+    const node = allNodes[i];
+
+    // Translation: normalized exact full-text match → full node replacement.
     const original = normalize(node.characters);
-    if (map.has(original)) {
-      const row = map.get(original);
-      await figma.loadFontAsync(node.fontName === figma.mixed ? { family: "Inter", style: "Regular" } : node.fontName);
+    if (translationMap.has(original)) {
+      const row = translationMap.get(original);
       try {
-        const fonts = node.getRangeAllFontNames(0, node.characters.length);
-        for (const f of fonts) await figma.loadFontAsync(f);
+        await loadAllFonts(node);
         node.characters = row.target;
-        matched.add(original);
+        translationMatched.add(original);
         replaced++;
-        changedNodeIds.push(node.id);
+        changedNodeIdSet.add(node.id);
         log.push({ status: "replaced", from: original, to: row.target, layer: node.name });
       } catch (e) {
         skipped++;
         log.push({ status: "error", from: original, error: e.message, layer: node.name });
       }
     }
+
+    // Localization: substring match → in-place replacement, preserves styling.
+    for (let j = 0; j < localizationTextRows.length; j++) {
+      const row = localizationTextRows[j];
+      // Re-read node.characters each time: prior replacements in this loop may have shifted text.
+      if (!node.characters.includes(row.source)) continue;
+      const result = await applySubstringReplacement(node, row.source, row.target);
+      if (result.ok) {
+        localizationTextMatchedIdx.add(j);
+        replaced++;
+        changedNodeIdSet.add(node.id);
+        log.push({ status: "replaced", from: row.source, to: row.target, layer: node.name });
+      } else {
+        skipped++;
+        log.push({ status: "error", from: row.source, error: result.error, layer: node.name });
+      }
+    }
+
     figma.ui.postMessage({ type: "progress", current: ++progress, total: totalWork });
   }
 
-  var notFound = [];
-  map.forEach(function(row, k) {
-    if (!matched.has(k)) notFound.push(row.source);
+  const notFound = [];
+  translationMap.forEach(function(row, k) {
+    if (!translationMatched.has(k)) notFound.push(row.source);
   });
-  return { replaced, skipped, log, notFound, changedNodeIds };
+  for (let j = 0; j < localizationTextRows.length; j++) {
+    if (!localizationTextMatchedIdx.has(j)) notFound.push(localizationTextRows[j].source);
+  }
+
+  return { replaced, skipped, log, notFound, changedNodeIds: Array.from(changedNodeIdSet) };
 }
 
 const HIGHLIGHT_GROUP_NAME = "Change Tracking Highlights";
